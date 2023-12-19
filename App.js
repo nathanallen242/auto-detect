@@ -6,40 +6,43 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import ScanScreen from './screens/ScanScreen';
 import LibraryScreen from './screens/LibraryScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import { ImageProvider } from './contexts/ImageContext';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 const Tab = createBottomTabNavigator();
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          tabBarIcon: ({ focused, color, size }) => {
-            let iconName;
+    <ImageProvider>
+      <NavigationContainer>
+        <Tab.Navigator
+          screenOptions={({ route }) => ({
+            tabBarIcon: ({ focused, color, size }) => {
+              let iconName;
 
-            if (route.name === 'Scan') {
-              iconName = focused ? 'camera-retro' : 'camera-retro';
-            } else if (route.name === 'Library') {
-              iconName = focused ? 'folder-o' : 'folder-o';
-            }
-              else {
-                iconName = focused ? 'gear': 'gear';
-            }
+              if (route.name === 'Scan') {
+                iconName = focused ? 'camera-retro' : 'camera-retro';
+              } else if (route.name === 'Library') {
+                iconName = focused ? 'folder-o' : 'folder-o';
+              }
+                else {
+                  iconName = focused ? 'gear': 'gear';
+              }
 
-            return <FontAwesome name={iconName} size={size} color={color} />;
-          },
-          headerShown: false,
-          tabBarActiveTintColor: 'blue',
-          tabBarInactiveTintColor: 'gray',
-        })}
-      >
-        <Tab.Screen name="Scan" component={ScanScreen} />
-        <Tab.Screen name="Library" component={LibraryScreen} />
-        <Tab.Screen name="Settings" component={SettingsScreen} />
-      </Tab.Navigator>
-      <StatusBar style="auto" />
-    </NavigationContainer>
+              return <FontAwesome name={iconName} size={size} color={color} />;
+            },
+            headerShown: false,
+            tabBarActiveTintColor: 'blue',
+            tabBarInactiveTintColor: 'gray',
+          })}
+        >
+          <Tab.Screen name="Scan" component={ScanScreen} />
+          <Tab.Screen name="Library" component={LibraryScreen} />
+          <Tab.Screen name="Settings" component={SettingsScreen} />
+        </Tab.Navigator>
+        <StatusBar style="auto" />
+      </NavigationContainer>
+    </ImageProvider>
   );
 }
 

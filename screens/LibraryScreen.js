@@ -1,7 +1,9 @@
+import { useContext } from 'react';
+import { ImageContext } from '../contexts/ImageContext';
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, FlatList, SafeAreaView } from 'react-native';
 import { ScrollView } from 'react-native-virtualized-view';
-import ImageComponent from '../components/library/ImageComponent';
+import { Image } from 'react-native';
 import SearchBar from '../components/library/SearchBar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import cars from '../constants/cars'
@@ -17,6 +19,8 @@ export default function LibraryScreen() {
  const insets = useSafeAreaInsets();
  const [refreshing, setRefreshing] = useState(false); 
  const [filterModalVisible, setFilterModalVisible] = useState(false);
+ 
+ const { images } = useContext(ImageContext);
 
  const onRefresh = () => {
     setRefreshing(true);
@@ -74,7 +78,7 @@ export default function LibraryScreen() {
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
     <Text style={styles.title}>Library</Text>
     <View style={styles.separator} />
-    <ScrollView>
+    <ScrollView showsVerticalScrollIndicator={false}>
     <SearchBar 
             searchQuery={query} 
             setSearchQuery={setQuery} 
@@ -90,17 +94,20 @@ export default function LibraryScreen() {
         }}
         />
         <View style={styles.imageContainer}>
-        <FlatList
-            data={filteredImages}
+         <FlatList
+            data={images}
+            renderItem={({ item }) => (
+               <View style={{ alignItems: 'center', marginBottom: 30 }}>
+               <Image
+                  source={{ uri: item.imageUri }}
+                  style={{ width: 300, height: 300, marginBottom: 10 }}
+               />
+               <Text style={{ marginTop: 5 }}>{item.prediction}</Text>
+               </View>
+            )}
             keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => <ImageComponent imageUri={item.imageUri} />}
-            onEndReached={loadMoreImages}
-            onEndReachedThreshold={0.5}
-            ListFooterComponent={loading ? <LoadingIndicator /> : null}
-            numColumns={3}
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-        />
+            showsVerticalScrollIndicator={false}
+         />
         </View>
     </ScrollView>
     </View>

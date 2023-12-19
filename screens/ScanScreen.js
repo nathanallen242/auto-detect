@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, TouchableOpacity, StyleSheet, Text, SafeAreaView,Modal } from 'react-native';
+import axios from 'axios';
+import { useNavigation } from '@react-navigation/native';
 import { Camera } from 'expo-camera';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -7,7 +9,8 @@ import { Platform } from 'react-native';
 import { Image } from 'react-native';
 import { Audio } from 'expo-av';
 import { Animated } from 'react-native';
-
+import { useContext } from 'react';
+import { ImageContext } from '../contexts/ImageContext';
 
 const ScanScreen = ({ navigation }) => {
   // Existing states
@@ -19,6 +22,8 @@ const ScanScreen = ({ navigation }) => {
   const [opacity, setOpacity] = useState(new Animated.Value(0));
   const [modalVisible, setModalVisible] = useState(false);
   const cameraRef = useRef(null);
+
+  const { addImage } = useContext(ImageContext);
 
   
   useEffect(() => {
@@ -46,6 +51,8 @@ const ScanScreen = ({ navigation }) => {
     );
   };
 
+  const nav = useNavigation();
+
   const handleCapture = async () => {
     console.log('Capturing...');
     if (cameraRef.current) {
@@ -53,19 +60,10 @@ const ScanScreen = ({ navigation }) => {
       setCapturedImage(photo.uri); // Save the captured image URI
       setModalVisible(true); // Show the modal
    
-      // Animation to fade captured photo out of screen
-      Animated.sequence([
-        Animated.timing(opacity, { toValue: 1, duration: 1000, useNativeDriver: false }),
-        Animated.timing(opacity, { toValue: 0, duration: 1000, useNativeDriver: false }),
-      ]).start(() => {
-        setCapturedImage(null);
-        setModalVisible(false); // Hide the modal
-      });
-   
       // Play a sound
       const soundObject = new Audio.Sound();
       try {
-        await soundObject.loadAsync(require('../sounds/shutter.mp3'));
+        await soundObject.loadAsync(require('../sounds/success.mp3'));
         await soundObject.playAsync();
       } catch (error) {
         console.log('Error playing sound: ', error);
@@ -73,6 +71,41 @@ const ScanScreen = ({ navigation }) => {
     }
    };
    
+   const handleRetake = () => {
+    setModalVisible(false);
+    setCapturedImage(null);
+    };
+
+    const handleSend = async () => {
+      const formData = new FormData();
+      formData.append('file', {
+        uri: capturedImage,
+        name: 'capturedImage.jpg',
+        type: 'image/jpeg',
+      });
+
+      try {
+        const response = await axios.post('http://10.5.1.234:6080/predict', formData, {
+          headers: {
+            'Content-Type':'multipart/form-data',
+          },
+        });
+      
+      if (response.status === 200) {
+        const prediction = response.data.prediction;
+        addImage(capturedImage, prediction)
+        nav.navigate('Library');
+        setModalVisible(false);
+        setCapturedImage(null); // TODO: Remove this line to keep the image in the library
+      }
+    } catch (error) {
+      console.log('Error sending file: ', error);
+      setCapturedImage(null); //
+      setModalVisible(false);
+    }
+  };
+
+
 
   const getFlashIconStyle = () => {
     return flashMode === Camera.Constants.FlashMode.off
@@ -134,12 +167,18 @@ const ScanScreen = ({ navigation }) => {
               transparent={true}
               visible={modalVisible}
               >
-          <Animated.View style={[styles.capturedImage, { opacity }]}>
-            <Image
-              source={{ uri: capturedImage }}
-              style={styles.capturedImage}
-            />
-          </Animated.View>
+              <View style={styles.modalContainer}>
+                <Image
+                style={styles.capturedImage}
+                source={{ uri: capturedImage }}
+                />
+                <TouchableOpacity onPress={handleRetake} style={styles.button}>
+                  <Text style={styles.buttonText}>Retake</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleSend} style={styles.button}>
+                  <Text style={styles.buttonText}>Predict</Text>
+                </TouchableOpacity>
+                </View>
           </Modal>
           </SafeAreaView>
     </GestureHandlerRootView>
@@ -194,7 +233,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
-   },   
+   },
+   modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+   },
+   button: {
+    backgroundColor: '#4CAF50',
+    padding: 10,
+    margin: 10,
+    borderRadius: 5,
+    width: '80%',
+   },
+   buttonText: {
+    color: 'white',
+    fontSize: 20,
+    textAlign: 'center',
+   },
 });
 
 export default ScanScreen;
