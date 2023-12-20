@@ -1,0 +1,6 @@
+.venv/
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+install-pyenv-win.ps1

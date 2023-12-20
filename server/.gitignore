@@ -1,0 +1,4 @@
+output.txt
+install-pyenv-win.ps1
+.venv/
+__pycache__/

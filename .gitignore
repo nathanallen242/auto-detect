@@ -6,9 +6,6 @@ node_modules/
 # Firebase
 config/Firebase.js
 
-# server
-server/
-
 # Expo
 .expo/
 dist/
