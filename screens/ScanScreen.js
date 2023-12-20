@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { View, TouchableOpacity, StyleSheet, Text, SafeAreaView,Modal } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Text, SafeAreaView,Modal, ActivityIndicator } from 'react-native';
+import { FIREBASE_DB } from '../config/FireBase';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { Camera } from 'expo-camera';
@@ -11,19 +12,31 @@ import { Audio } from 'expo-av';
 import { Animated } from 'react-native';
 import { useContext } from 'react';
 import { ImageContext } from '../contexts/ImageContext';
+import { AuthContext } from '../contexts/AuthContext';
+import { ref, set, push } from "firebase/database";
+import * as ImagePicker from 'expo-image-picker';
 
 const ScanScreen = ({ navigation }) => {
   // Existing states
   const [hasPermission, setHasPermission] = useState(null);
+  const [capturedImage, setCapturedImage] = useState(null);
+  const [zoom, setZoom] = useState(0);
+
+  // Camera states
   const [type, setType] = useState(Camera.Constants.Type.back);
   const [flashMode, setFlashMode] = useState(Camera.Constants.FlashMode.off);
-  const [zoom, setZoom] = useState(0);
-  const [capturedImage, setCapturedImage] = useState(null);
-  const [opacity, setOpacity] = useState(new Animated.Value(0));
-  const [modalVisible, setModalVisible] = useState(false);
   const cameraRef = useRef(null);
 
+  // Existing contexts
   const { addImage } = useContext(ImageContext);
+  const { user } = useContext(AuthContext);
+
+  // Modal-related states
+  const [modalVisible, setModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const successAnimation = useRef(new Animated.Value(0)).current;
+
 
   
   useEffect(() => {
@@ -77,6 +90,8 @@ const ScanScreen = ({ navigation }) => {
     };
 
     const handleSend = async () => {
+      setLoading(true);
+
       const formData = new FormData();
       formData.append('file', {
         uri: capturedImage,
@@ -93,14 +108,30 @@ const ScanScreen = ({ navigation }) => {
       
       if (response.status === 200) {
         const prediction = response.data.prediction;
-        addImage(capturedImage, prediction)
-        nav.navigate('Library');
-        setModalVisible(false);
-        setCapturedImage(null); // TODO: Remove this line to keep the image in the library
+        if (user) {
+          const imageRef = push(ref(FIREBASE_DB, `users/${user.uid}/images`));
+          await set(imageRef, { imageUri: capturedImage, prediction: prediction });
+        }
+        else {
+          addImage(capturedImage, prediction);
+        }
+        setSuccess(true);
+        Animated.timing(successAnimation, {
+          toValue: 1,
+          duration: 3000,
+          useNativeDriver: true,
+        }).start(() => {
+          setSuccess(false);
+          successAnimation.setValue(0);
+          nav.navigate('Library');
+          setModalVisible(false);
+          setCapturedImage(null);
+        }); 
       }
+      setLoading(false);
     } catch (error) {
       console.log('Error sending file: ', error);
-      setCapturedImage(null); //
+      setCapturedImage(null);
       setModalVisible(false);
     }
   };
@@ -132,6 +163,26 @@ const ScanScreen = ({ navigation }) => {
     [onPinch]
   );
 
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Sorry, we need camera roll permissions to make this work!');
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setCapturedImage(result.assets[0].uri);
+      setModalVisible(true);
+    }
+  };
+
   if (hasPermission === null) {
     return <View />;
   }
@@ -155,6 +206,9 @@ const ScanScreen = ({ navigation }) => {
                   <TouchableOpacity style={styles.flipButton} onPress={flipCamera}>
                       <FontAwesome name="refresh" size={35} color="#FFF" />
                   </TouchableOpacity>
+                  <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
+                    <FontAwesome name="photo" size={35} color="#FFF" />
+                  </TouchableOpacity>
                   </View>
                   <TouchableOpacity style={styles.captureButton} onPress={handleCapture}>
                       <FontAwesome name="circle-o" size={65} color="#FFF" />
@@ -166,19 +220,38 @@ const ScanScreen = ({ navigation }) => {
               animationType="slide"
               transparent={true}
               visible={modalVisible}
+              onRequestClose={() => {
+                setModalVisible(false);
+                setCapturedImage(null);
+              }}
+              >
+              <TouchableOpacity
+                style={{ flex: 1 }}
+                onPress={() => {
+                  setModalVisible(false);
+                }}
               >
               <View style={styles.modalContainer}>
                 <Image
                 style={styles.capturedImage}
                 source={{ uri: capturedImage }}
                 />
-                <TouchableOpacity onPress={handleRetake} style={styles.button}>
-                  <Text style={styles.buttonText}>Retake</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={handleSend} style={styles.button}>
-                  <Text style={styles.buttonText}>Predict</Text>
-                </TouchableOpacity>
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity onPress={handleRetake} style={styles.button} disabled={loading}>
+                    <Text style={styles.buttonText}>Retake</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleSend} style={styles.button} disabled={loading}>
+                    <Text style={styles.buttonText}>Predict</Text>
+                  </TouchableOpacity>
                 </View>
+                {loading && <ActivityIndicator size="large" color="#0000ff" />}
+                {success && (
+                  <Animated.View style = {{ opacity: successAnimation }}>
+                    <Text style={styles.successText}>Analysis successful! Redirecting to Library...</Text>
+                  </Animated.View>
+                )}
+              </View>
+            </TouchableOpacity>
           </Modal>
           </SafeAreaView>
     </GestureHandlerRootView>
@@ -214,6 +287,9 @@ const styles = StyleSheet.create({
   captureButton: {
     marginBottom: 30,
   },
+  photoButton: {
+    alignSelf: 'flex-end',
+  },
   zoomSlider: {
     alignSelf: 'stretch',
   },
@@ -224,33 +300,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'transparent',
    },
-   capturedImageOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Semi-transparent background
-   },
    modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-   },
-   button: {
+    padding: 20,
+    borderRadius: 10,
+  },
+  button: {
     backgroundColor: '#4CAF50',
     padding: 10,
-    margin: 10,
+    margin: 5,
     borderRadius: 5,
-    width: '80%',
-   },
+    width: '40%', // Adjust as needed
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
    buttonText: {
     color: 'white',
     fontSize: 20,
     textAlign: 'center',
+   },
+   successText: {
+    color: 'white',
+    fontSize: 24,
+    fontWeight: 'bold',
    },
 });
 

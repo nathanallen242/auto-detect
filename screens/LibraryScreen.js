@@ -1,118 +1,114 @@
-import { useContext } from 'react';
-import { ImageContext } from '../contexts/ImageContext';
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, FlatList, SafeAreaView } from 'react-native';
+import React, { useState, useEffect, useContext } from 'react';
+import { View, Text, StyleSheet, FlatList, SafeAreaView, RefreshControl } from 'react-native';
 import { ScrollView } from 'react-native-virtualized-view';
 import { Image } from 'react-native';
 import SearchBar from '../components/library/SearchBar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import cars from '../constants/cars'
-import FilterModal from '../components/library/FilterModal';
+import { ImageContext } from '../contexts/ImageContext';
+import { AuthContext } from '../contexts/AuthContext';
+import { FIREBASE_DB } from '../config/FireBase';
+import { ref, onValue } from "firebase/database";
 
 export default function LibraryScreen() {
- 
- const [page, setPage] = useState(1);
- const [filteredImages, setFilteredImages] = useState([]);
- const [loading, setLoading] = useState(false);
- const [query, setQuery] = useState('');
- const [filter, setFilter] = useState({ make: '', model: '', year: '' });
- const insets = useSafeAreaInsets();
- const [refreshing, setRefreshing] = useState(false); 
- const [filterModalVisible, setFilterModalVisible] = useState(false);
- 
- const { images } = useContext(ImageContext);
 
- const onRefresh = () => {
+  const [query, setQuery] = useState('');
+  const insets = useSafeAreaInsets();
+  const [refreshing, setRefreshing] = useState(false);
+  const [filteredImages, setFilteredImages] = useState([]);
+  
+  const { images } = useContext(ImageContext);
+  const { user } = useContext(AuthContext);
+
+  useEffect(() => {
+    if (user) {
+      // User is logged in, fetch images from Firebase
+      const imagesRef = ref(FIREBASE_DB, `users/${user.uid}/images`);
+      onValue(imagesRef, (snapshot) => {
+        const firebaseImages = snapshot.val();
+        if (firebaseImages) {
+          const imagesArray = Object.keys(firebaseImages).map((key) => firebaseImages[key]);
+          setFilteredImages(imagesArray);
+        } else {
+          // No images exist for the user
+          setFilteredImages([]);
+        }
+      });
+    } else {
+      // User is not logged in, load images from AsyncStorage
+      setFilteredImages(images);
+    }
+  }, [user, images]);
+
+  const onRefresh = () => {
     setRefreshing(true);
-    // Fetch new data here... TODO
+    if (user) {
+      // User is logged in, fetch images from Firebase
+      const imagesRef = ref(FIREBASE_DB, `users/${user.uid}/images`);
+      onValue(imagesRef, (snapshot) => {
+        const firebaseImages = snapshot.val();
+        if (firebaseImages) {
+          const imagesArray = Object.keys(firebaseImages).map((key) => firebaseImages[key]);
+          setFilteredImages(imagesArray);
+        } else {
+          // No images exist for the user
+          setFilteredImages([]);
+        }
+      });
+    } else {
+      // User is not logged in, load images from AsyncStorage
+      setFilteredImages(images);
+    }
     setRefreshing(false);
- };
+  };
 
- const loadMoreImages = () => {
-    setLoading(true);
-    setPage(prevPage => prevPage + 1);
-    setLoading(false);
- };
-
- const handleSearch = (text) => {
+  const handleSearch = (text) => {
     setQuery(text);
-    const filtered = cars.filter(car =>
-      car.make.toLowerCase().includes(text.toLowerCase()) ||
-      car.model.toLowerCase().includes(text.toLowerCase()) ||
-      car.year.toString().includes(text)
+    const filtered = images.filter(image =>
+      image.prediction.toLowerCase().includes(text.toLowerCase())
     );
     setFilteredImages(filtered);
    };
-   
 
- useEffect(() => {
-  setFilteredImages(cars); // Load initial images when component mounts
- }, []);
- 
 
- const handleFilter = (newFilter) => {
-    setFilter(newFilter);
-};
-
- const filteredCars = cars.filter(car =>
-    car.make.includes(filter.make) &&
-    car.model.includes(filter.model) &&
-    car.year.toString().includes(filter.year)
-);
-
- const LoadingIndicator = () => {
- return (
- <View style={styles.loadingIndicator}>
-    <ActivityIndicator size="large" color="#0000ff" />
-    <Text>Loading...</Text>
- </View>
- );
- };
-
- const handleFilterIconPress = () => {
-  setFilterModalVisible(true);
- };
-
- return (
- <SafeAreaView style={styles.safeArea}>
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-    <Text style={styles.title}>Library</Text>
-    <View style={styles.separator} />
-    <ScrollView showsVerticalScrollIndicator={false}>
-    <SearchBar 
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+        <Text style={styles.title}>Library</Text>
+        <View style={styles.separator} />
+        <ScrollView 
+        showsVerticalScrollIndicator={false}
+         refreshControl={
+               <RefreshControl 
+               refreshing={refreshing} 
+               onRefresh={onRefresh} />
+               }
+         keyboardShouldPersistTaps='always'
+         >
+          <SearchBar 
             searchQuery={query} 
             setSearchQuery={setQuery} 
             handleSearch={handleSearch}
-            onFilterIconPress={handleFilterIconPress}
-        />
-    <FilterModal
-        visible={filterModalVisible}
-        onClose={() => setFilterModalVisible(false)}
-        onApply={() => {
-            // Handle apply filter here
-            setFilterModalVisible(false);
-        }}
-        />
-        <View style={styles.imageContainer}>
-         <FlatList
-            data={images}
-            renderItem={({ item }) => (
-               <View style={{ alignItems: 'center', marginBottom: 30 }}>
-               <Image
-                  source={{ uri: item.imageUri }}
-                  style={{ width: 300, height: 300, marginBottom: 10 }}
-               />
-               <Text style={{ marginTop: 5 }}>{item.prediction}</Text>
-               </View>
-            )}
-            keyExtractor={(item, index) => index.toString()}
-            showsVerticalScrollIndicator={false}
-         />
-        </View>
-    </ScrollView>
-    </View>
- </SafeAreaView>
- );
+          />
+          <View style={styles.imageContainer}>
+            <FlatList
+              data={filteredImages}
+              renderItem={({ item }) => (
+                <View style={{ alignItems: 'center', marginBottom: 30 }}>
+                  <Image
+                    source={{ uri: item.imageUri }}
+                    style={{ width: 300, height: 300, marginBottom: 10 }}
+                  />
+                  <Text style={{ marginTop: 5 }}>{item.prediction}</Text>
+                </View>
+              )}
+              keyExtractor={(item, index) => index.toString()}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
+        </ScrollView>
+      </View>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({

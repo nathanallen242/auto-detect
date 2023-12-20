@@ -1,28 +1,64 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import React, { useContext } from 'react';
+import { Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Button } from 'react-native';
+import { AuthContext } from '../contexts/AuthContext';
 import { Feather } from '@expo/vector-icons';
 
-const SettingItem = ({ name, iconName }) => (
-  <TouchableOpacity style={styles.settingItem}>
+const SettingItem = ({ name, iconName, onPress }) => (
+  <TouchableOpacity style={styles.settingItem} onPress={onPress}>
     <Feather name={iconName} size={24} color="black" />
     <Text style={styles.settingText}>{name}</Text>
   </TouchableOpacity>
 );
 
-const SettingsScreen = () => {
+const SettingsScreen = ({ navigation }) => {
   const settings = [
-    { name: 'Setting 1', iconName: 'user' },
-    { name: 'Setting 2', iconName: 'lock' },
+    { name: 'Language Selection', iconName: 'globe' },
+    { name: 'Clear History', iconName: 'trash-2' },
+    { name: 'Dark/Light Mode', iconName: 'moon' },
     // Add more settings as needed
   ];
+
+  const { user, logout } = useContext(AuthContext);
+
+  const handleLanguageSelection = () => {
+    // Handle language selection
+  };
+
+  const handleClearHistory = () => {
+    // Handle clear history
+  };
+
+  const handleToggleTheme = () => {
+    // Handle toggle theme
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Settings</Text>
       <ScrollView>
-        {settings.map((setting, index) => (
-          <SettingItem key={index} {...setting} />
-        ))}
+        {settings.map((setting, index) => {
+          let onPress;
+          switch (setting.name) {
+            case 'Language Selection':
+              onPress = handleLanguageSelection;
+              break;
+            case 'Clear History':
+              onPress = handleClearHistory;
+              break;
+            case 'Dark/Light Mode':
+              onPress = handleToggleTheme;
+              break;
+          }
+          return <SettingItem key={index} {...setting} onPress={onPress} />;
+        })}
+        {!user ? (
+          <>
+            <Button title="Login" onPress={() => navigation.navigate('Login')}/>
+            <Button title="Signup" onPress={() => navigation.navigate('Signup')} />
+          </>
+        ) : (
+          <Button title="Logout" onPress={logout} />
+        )}
       </ScrollView>
     </SafeAreaView>
   );

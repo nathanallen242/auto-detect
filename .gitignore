@@ -10,6 +10,7 @@ config/Firebase.js
 .expo/
 dist/
 web-build/
+.env
 
 # Native
 *.orig.*
