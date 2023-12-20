@@ -22,8 +22,14 @@ export const ImageProvider = ({ children }) => {
     AsyncStorage.setItem('images', JSON.stringify(newImages));
   };
 
+  const clearImages = () => {
+    setImages([]);
+    // Remove the images from AsyncStorage
+    AsyncStorage.removeItem('images');
+  };
+
   return (
-    <ImageContext.Provider value={{ images, addImage }}>
+    <ImageContext.Provider value={{ images, addImage, clearImages }}>
       {children}
     </ImageContext.Provider>
   );

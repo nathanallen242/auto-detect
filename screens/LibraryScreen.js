@@ -89,6 +89,9 @@ export default function LibraryScreen() {
             setSearchQuery={setQuery} 
             handleSearch={handleSearch}
           />
+          {filteredImages.length === 0 ? (
+          <Text style={styles.noImagesText}>No images found. Start scanning to add images.</Text>
+        ) : (
           <View style={styles.imageContainer}>
             <FlatList
               data={filteredImages}
@@ -105,10 +108,11 @@ export default function LibraryScreen() {
               showsVerticalScrollIndicator={false}
             />
           </View>
-        </ScrollView>
-      </View>
-    </SafeAreaView>
-  );
+        )}
+      </ScrollView>
+    </View>
+  </SafeAreaView>
+);
 }
 
 const styles = StyleSheet.create({
@@ -138,4 +142,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
  },
+ noImagesText: {
+  textAlign: 'center',
+  marginTop: 20,
+  fontSize: 16,
+  color: 'grey',
+},
  });

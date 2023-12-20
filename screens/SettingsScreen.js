@@ -1,6 +1,8 @@
 import React, { useContext } from 'react';
-import { Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Button } from 'react-native';
+import { Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Button, Alert } from 'react-native';
 import { AuthContext } from '../contexts/AuthContext';
+import { ImageContext } from '../contexts/ImageContext';
+import { FIREBASE_DB } from '../config/FireBase';
 import { Feather } from '@expo/vector-icons';
 
 const SettingItem = ({ name, iconName, onPress }) => (
@@ -19,13 +21,30 @@ const SettingsScreen = ({ navigation }) => {
   ];
 
   const { user, logout } = useContext(AuthContext);
+  const { clearImages } = useContext(ImageContext);
 
   const handleLanguageSelection = () => {
     // Handle language selection
   };
 
   const handleClearHistory = () => {
-    // Handle clear history
+    Alert.alert(
+      'Confirm Deletion',
+      'Are you sure you want to clear your image history?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'OK', onPress: () => {
+            if (user) {
+              remove(ref(FIREBASE_DB, `images/${user.uid}`));
+            } else {
+              clearImages();
+            }
+          }
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   const handleToggleTheme = () => {
