@@ -65,22 +65,29 @@
         document.getElementById('uploadForm').addEventListener('submit', function(e) {
             e.preventDefault();
             var formData = new FormData(this);
-
+    
             // Disable the submit button and show the loading message
             document.getElementById('submitBtn').disabled = true;
             document.getElementById('loading').classList.remove('hidden');
-
+    
             fetch('/predict', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.statusText);
+                }
+                return response.json();
+            })
             .then(data => {
                 document.getElementById('result').classList.remove('hidden');
                 document.getElementById('result').textContent = 'Prediction: ' + data.prediction;
             })
             .catch(error => {
                 console.error('Error:', error);
+                document.getElementById('result').classList.remove('hidden');
+                document.getElementById('result').textContent = 'Error: ' + error.message;
             })
             .finally(() => {
                 // Re-enable the submit button and hide the loading message
@@ -88,6 +95,6 @@
                 document.getElementById('loading').classList.add('hidden');
             });
         });
-    </script>
+    </script>    
 </body>
 </html>
