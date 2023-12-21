@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import torch
 import torchvision.transforms as transforms
@@ -38,6 +38,13 @@ classes = {}
 for line in lines:
     name, idx = line.strip().split(': ')
     classes[int(idx)] = name
+
+
+# Endpoint for the home page
+@app.route('/')
+def index():
+    return render_template('index.html')
+
 
 # Endpoint for image upload and model inference
 @app.route('/predict', methods=['POST'])
