@@ -42,6 +42,13 @@
             color: #3c763d;
             display: none;
         }
+        .hidden {
+            display: none;
+        }
+        #loading {
+            margin-top: 20px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
@@ -49,25 +56,36 @@
     <p>Select an image of a car to predict its make, model, and year.</p>
     <form id="uploadForm" enctype="multipart/form-data">
         <input type="file" name="file" required>
-        <input type="submit" value="Upload and Predict">
+        <input type="submit" value="Upload and Predict" id="submitBtn">
     </form>
-    <div id="result"></div>
+    <div id="loading" class="hidden">Processing...</div>
+    <div id="result" class="hidden"></div>
 
     <script>
         document.getElementById('uploadForm').addEventListener('submit', function(e) {
             e.preventDefault();
             var formData = new FormData(this);
+
+            // Disable the submit button and show the loading message
+            document.getElementById('submitBtn').disabled = true;
+            document.getElementById('loading').classList.remove('hidden');
+
             fetch('/predict', {
                 method: 'POST',
                 body: formData
             })
             .then(response => response.json())
             .then(data => {
-                document.getElementById('result').style.display = 'block';
+                document.getElementById('result').classList.remove('hidden');
                 document.getElementById('result').textContent = 'Prediction: ' + data.prediction;
             })
             .catch(error => {
                 console.error('Error:', error);
+            })
+            .finally(() => {
+                // Re-enable the submit button and hide the loading message
+                document.getElementById('submitBtn').disabled = false;
+                document.getElementById('loading').classList.add('hidden');
             });
         });
     </script>
