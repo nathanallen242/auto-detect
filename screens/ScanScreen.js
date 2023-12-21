@@ -15,6 +15,7 @@ import { ImageContext } from '../contexts/ImageContext';
 import { AuthContext } from '../contexts/AuthContext';
 import { ref, set, push } from "firebase/database";
 import * as ImagePicker from 'expo-image-picker';
+import { EXPO_PRIVATE_API_URL } from '@env';
 
 const ScanScreen = ({ navigation }) => {
   // Existing states
@@ -100,7 +101,7 @@ const ScanScreen = ({ navigation }) => {
       });
 
       try {
-        const response = await axios.post('http://10.5.1.234:6080/predict', formData, {
+        const response = await axios.post(EXPO_PRIVATE_API_URL, formData, {
           headers: {
             'Content-Type':'multipart/form-data',
           },
