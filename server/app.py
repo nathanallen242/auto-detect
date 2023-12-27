@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template
+from car import describe
 from flask_cors import CORS
 import torch
 import torchvision.transforms as transforms
@@ -66,8 +67,9 @@ def predict():
             outputs = model(image)
             _, predicted = torch.max(outputs.data, 1)
             prediction = classes[predicted.item()]
+            details = describe(prediction)
 
-            return jsonify({'prediction': prediction})
+            return jsonify({'prediction': prediction, 'details': details})
 
 
 # Testing function
