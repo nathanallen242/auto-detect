@@ -15,8 +15,9 @@ export const ImageProvider = ({ children }) => {
     });
   }, []);
 
-  const addImage = (imageUri, prediction) => {
-    const newImages = [...images, { imageUri, prediction }];
+  const addImage = (imageUri, prediction, details) => {
+    const newImages = [...images, { imageUri, prediction, details }];
+    console.log('Adding image:', { imageUri, prediction, details });
     setImages(newImages);
     // Store the images in AsyncStorage
     AsyncStorage.setItem('images', JSON.stringify(newImages));

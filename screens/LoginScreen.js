@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { View, TextInput, Text, Button, StyleSheet, Alert } from 'react-native';
 import { AuthContext } from '../contexts/AuthContext';
 
+
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

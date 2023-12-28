@@ -1,21 +1,21 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { View, TouchableOpacity, StyleSheet, Text, SafeAreaView,Modal, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback, useMemo, useContext } from 'react';
+import {
+View, TouchableOpacity, StyleSheet, Text, 
+SafeAreaView, Modal, ActivityIndicator,
+Platform, Animated, Image } from 'react-native';
 import { FIREBASE_DB } from '../config/FireBase';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import { Camera } from 'expo-camera';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Platform } from 'react-native';
-import { Image } from 'react-native';
-import { Audio } from 'expo-av';
-import { Animated } from 'react-native';
-import { useContext } from 'react';
+import { Audio } from 'expo-av';;
 import { ImageContext } from '../contexts/ImageContext';
 import { AuthContext } from '../contexts/AuthContext';
 import { ref, set, push } from "firebase/database";
 import * as ImagePicker from 'expo-image-picker';
-import { EXPO_PRIVATE_API_URL } from '@env';
+import { EXPO_PRIVATE_API_URL, EXPO_NATIVE_URL, EXPO_APP_ID, EXPO_APP_TOKEN } from '@env';
+
 
 const ScanScreen = ({ navigation }) => {
   // Existing states
@@ -128,7 +128,15 @@ const ScanScreen = ({ navigation }) => {
           nav.navigate('Library');
           setModalVisible(false);
           setCapturedImage(null);
-        }); 
+        });
+        // Send push notification: TODO
+        axios.post(EXPO_NATIVE_URL, {
+          subID: user.uid,
+          appId: EXPO_APP_ID,
+          appToken: EXPO_APP_TOKEN,
+          title: 'Prediction Successful!',
+          message: `Predicted car: ${prediction}`
+        });
       }
       setLoading(false);
     } catch (error) {

@@ -2,6 +2,8 @@ import React, { createContext, useState, useEffect } from 'react';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { getDatabase, ref, set } from "firebase/database";
 import { FIREBASE_APP } from '../config/FireBase';
+import { registerIndieID, unregisterIndieDevice } from 'native-notify';
+import { EXPO_APP_ID, EXPO_APP_TOKEN } from '@env';
 
 export const AuthContext = createContext();
 
@@ -35,6 +37,8 @@ export const AuthProvider = ({ children }) => {
            await signInWithEmailAndPassword(auth, email, password);
            setUser(user);
            setError(null);
+           // Native Notify Indie ID registration
+           registerIndieID(user.uid, EXPO_APP_ID, EXPO_APP_TOKEN);
          } catch (e) {
            setError(e.message);
            console.error(e);
@@ -50,6 +54,8 @@ export const AuthProvider = ({ children }) => {
            });
            setUser(user);
            setError(null);
+           // Native Notify Indie ID registration
+           registerIndieID(user.uid, EXPO_APP_ID, EXPO_APP_TOKEN);
          } catch (e) {
            setError(e.message);
            console.error(e);
@@ -57,6 +63,8 @@ export const AuthProvider = ({ children }) => {
        },
        logout: async () => {
          try {
+           // Native Notify Indie Push Registration Code
+           unregisterIndieDevice(user.uid, EXPO_APP_ID, EXPO_APP_TOKEN);
            await signOut(auth);
            setUser(null);
          } catch (e) {
