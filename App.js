@@ -12,6 +12,7 @@ import SignupScreen from './screens/SignupScreen';
 import DetailScreen from './screens/DetailScreen';
 import { AuthProvider } from './contexts/AuthContext';
 import { ImageProvider } from './contexts/ImageContext';
+import * as SplashScreen from 'expo-splash-screen';
 import registerNNPushToken from 'native-notify';
 import { EXPO_APP_ID, EXPO_APP_TOKEN } from '@env';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
@@ -42,6 +43,10 @@ const SettingsStack = () => {
 export default function App() {
   // Register for push notifications: TODO
   registerNNPushToken(EXPO_APP_ID, EXPO_APP_TOKEN);
+
+  // Prevent native splash screen from autohiding
+  SplashScreen.preventAutoHideAsync();
+  setTimeout(SplashScreen.hideAsync, 2000);
 
   return (
     <AuthProvider>
