@@ -129,7 +129,8 @@ const ScanScreen = ({ navigation }) => {
           setModalVisible(false);
           setCapturedImage(null);
         });
-        // Send push notification: TODO
+        // Send push notification: only if user is logged in
+        if (user) await
         axios.post(EXPO_NATIVE_URL, {
           subID: user.uid,
           appId: EXPO_APP_ID,

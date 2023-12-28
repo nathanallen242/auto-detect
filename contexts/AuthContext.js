@@ -34,7 +34,8 @@ export const AuthProvider = ({ children }) => {
        setError,
        login: async (email, password) => {
          try {
-           await signInWithEmailAndPassword(auth, email, password);
+           const userCredential = await signInWithEmailAndPassword(auth, email, password);
+           const user = userCredential.user;
            setUser(user);
            setError(null);
            // Native Notify Indie ID registration
