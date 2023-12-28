@@ -109,12 +109,13 @@ const ScanScreen = ({ navigation }) => {
       
       if (response.status === 200) {
         const prediction = response.data.prediction;
+        const details = response.data.details;
         if (user) {
           const imageRef = push(ref(FIREBASE_DB, `users/${user.uid}/images`));
-          await set(imageRef, { imageUri: capturedImage, prediction: prediction });
+          await set(imageRef, { imageUri: capturedImage, prediction: prediction, details: details});
         }
         else {
-          addImage(capturedImage, prediction);
+          addImage(capturedImage, prediction, details);
         }
         setSuccess(true);
         Animated.timing(successAnimation, {

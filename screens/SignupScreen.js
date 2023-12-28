@@ -7,26 +7,30 @@ const SignupScreen = ({ navigation }) => {
   const [password, setPassword] = useState('');
   const { register, error } = useContext(AuthContext);
 
-  const handleSignup = () => {
-    register(email, password)
-      .then(() => {
-        navigation.navigate('SettingsHome');
-      })
-      .catch((error) => {
-        switch (error.code) {
-          case 'auth/email-already-in-use':
-            Alert.alert('Error', 'This email is already in use.');
-            break;
-          case 'auth/invalid-email':
-            Alert.alert('Invalid Email', 'Please enter a valid email.');
-            break;
-          case 'auth/weak-password':
-            Alert.alert('Weak Password', 'Please enter a stronger password.');
-            break;
-          default:
-            Alert.alert('Error', 'An error occurred. Please try again.');
-        }
-      });
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    const unsubscribe = navigation.addListener('blur', () => {
+      console.log('Navigated away from SignupScreen');
+    });
+    try {
+      await register(email, password);
+      navigation.navigate('SettingsHome');
+    } catch (error) {
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          Alert.alert('Email Already in Use', 'Please use a different email.');
+          break;
+        case 'auth/invalid-email':
+          Alert.alert('Invalid Email', 'Please enter a valid email.');
+          break;
+        case 'auth/weak-password':
+          Alert.alert('Weak Password', 'Please enter a stronger password.');
+          break;
+        default:
+          Alert.alert('Error', 'An error occurred. Please try again.');
+      }
+    }
+    unsubscribe();
   };
 
   return (

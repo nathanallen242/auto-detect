@@ -4,6 +4,7 @@ import { AuthContext } from '../contexts/AuthContext';
 import { ImageContext } from '../contexts/ImageContext';
 import { FIREBASE_DB } from '../config/FireBase';
 import { Feather } from '@expo/vector-icons';
+import { remove, ref } from 'firebase/database';
 
 const SettingItem = ({ name, iconName, onPress }) => (
   <TouchableOpacity style={styles.settingItem} onPress={onPress}>
@@ -36,7 +37,7 @@ const SettingsScreen = ({ navigation }) => {
         {
           text: 'OK', onPress: () => {
             if (user) {
-              remove(ref(FIREBASE_DB, `images/${user.uid}`));
+              remove(ref(FIREBASE_DB, `users/${user.uid}/images`));
             } else {
               clearImages();
             }
@@ -72,11 +73,31 @@ const SettingsScreen = ({ navigation }) => {
         })}
         {!user ? (
           <>
-            <Button title="Login" onPress={() => navigation.navigate('Login')}/>
-            <Button title="Signup" onPress={() => navigation.navigate('Signup')} />
+            <Button title="Login" onPress={() => {
+              const unsubscribe = navigation.addListener('blur', () => {
+                console.log('Navigated away from SettingsScreen to Login');
+              });
+              navigation.navigate('Login');
+              unsubscribe();
+            }}/>
+            
+            <Button title="Signup" onPress={() => {
+              const unsubscribe = navigation.addListener('blur', () => {
+                console.log('Navigated away from SettingsScreen to Signup');
+              });
+              navigation.navigate('Signup');
+              unsubscribe();
+            }} />
+            
           </>
         ) : (
-          <Button title="Logout" onPress={logout} />
+          <Button title="Logout" onPress={() => {
+            const unsubscribe = navigation.addListener('blur', () => {
+              console.log('Navigated away from SettingsScreen after Logout');
+            });
+            logout();
+            unsubscribe();
+          }} />
         )}
       </ScrollView>
     </SafeAreaView>

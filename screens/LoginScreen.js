@@ -20,14 +20,19 @@ const LoginScreen = ({ navigation }) => {
         Alert.alert('Error', 'An error occurred. Please try again.');
     }
   };
-  
-  handleLogin = () => {
-    login(email, password)
-      .then(() => {
-        navigation.navigate('SettingsHome');
-      })
-      .catch(this.handleError);
-  };
+ 
+ handleLogin = () => {
+   const unsubscribe = navigation.addListener('blur', () => {
+     console.log('Navigated away from LoginScreen');
+   });
+   login(email, password)
+     .then(() => {
+       navigation.navigate('SettingsHome');
+     })
+     .catch(this.handleError);
+   unsubscribe();
+ };
+ 
 
   return (
     <View style={styles.container}>

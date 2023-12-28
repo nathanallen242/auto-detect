@@ -7,14 +7,26 @@ import { createStackNavigator } from '@react-navigation/stack';
 import ScanScreen from './screens/ScanScreen';
 import LibraryScreen from './screens/LibraryScreen';
 import SettingsScreen from './screens/SettingsScreen';
-import { AuthProvider } from './contexts/AuthContext';
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
+import DetailScreen from './screens/DetailScreen';
+import { AuthProvider } from './contexts/AuthContext';
 import { ImageProvider } from './contexts/ImageContext';
+import registerNNPushToken from 'native-notify';
+import { EXPO_APP_ID, EXPO_APP_TOKEN } from '@env';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+
+const LibraryStack = () => {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="LibraryHome" component={LibraryScreen} options = {{ headerShown: false }} />
+      <Stack.Screen name="Details" component={DetailScreen} options = {{ title: 'Car Details'}} />
+    </Stack.Navigator>
+  );
+}
 
 const SettingsStack = () => {
   return (
@@ -28,11 +40,15 @@ const SettingsStack = () => {
 
 
 export default function App() {
+  // Register for push notifications: TODO
+  registerNNPushToken(EXPO_APP_ID, EXPO_APP_TOKEN);
+
   return (
     <AuthProvider>
       <ImageProvider>
         <NavigationContainer>
           <Tab.Navigator
+            initialRouteName="Scan" 
             screenOptions={({ route }) => ({
               tabBarIcon: ({ focused, color, size }) => {
                 let iconName;
@@ -54,7 +70,7 @@ export default function App() {
             })}
           >
             <Tab.Screen name="Scan" component={ScanScreen} />
-            <Tab.Screen name="Library" component={LibraryScreen} />
+            <Tab.Screen name="Library" component={LibraryStack} />
             <Tab.Screen name="Settings" component={SettingsStack} />
           </Tab.Navigator>
           <StatusBar style="auto" />

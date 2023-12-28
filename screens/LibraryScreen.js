@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { View, Text, StyleSheet, FlatList, SafeAreaView, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, FlatList, SafeAreaView, RefreshControl, TouchableOpacity } from 'react-native';
 import { ScrollView } from 'react-native-virtualized-view';
 import { Image } from 'react-native';
 import SearchBar from '../components/library/SearchBar';
@@ -9,7 +9,7 @@ import { AuthContext } from '../contexts/AuthContext';
 import { FIREBASE_DB } from '../config/FireBase';
 import { ref, onValue } from "firebase/database";
 
-export default function LibraryScreen() {
+export default function LibraryScreen({ navigation }) {
 
   const [query, setQuery] = useState('');
   const insets = useSafeAreaInsets();
@@ -96,13 +96,15 @@ export default function LibraryScreen() {
             <FlatList
               data={filteredImages}
               renderItem={({ item }) => (
-                <View style={{ alignItems: 'center', marginBottom: 30 }}>
-                  <Image
-                    source={{ uri: item.imageUri }}
-                    style={{ width: 300, height: 300, marginBottom: 10 }}
-                  />
-                  <Text style={{ marginTop: 5 }}>{item.prediction}</Text>
-                </View>
+                <TouchableOpacity onPress={() => navigation.navigate('Details', { image: item })}>
+                  <View style={{ alignItems: 'center', marginBottom: 30 }}>
+                    <Image
+                      source={{ uri: item.imageUri }}
+                      style={{ width: 300, height: 300, marginBottom: 10 }}
+                    />
+                    <Text style={{ marginTop: 5 }}>{item.prediction}</Text>
+                  </View>
+                </TouchableOpacity>
               )}
               keyExtractor={(item, index) => index.toString()}
               showsVerticalScrollIndicator={false}
