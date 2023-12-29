@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
-import { View, TextInput, Text, Button, StyleSheet, Alert } from 'react-native';
+import { View, TextInput, Text, Button, StyleSheet, Alert, Image } from 'react-native';
 import { AuthContext } from '../contexts/AuthContext';
+import Logo from '../assets/icon.png';
 
 
 const LoginScreen = ({ navigation }) => {
@@ -37,6 +38,7 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      <Image source={Logo} style={styles.icon} />
       <Text style={styles.title}>Login</Text>
       <TextInput
         style={styles.input}
@@ -51,12 +53,20 @@ const LoginScreen = ({ navigation }) => {
         onChangeText={setPassword}
         secureTextEntry
       />
-      <Button title="Login" onPress={handleLogin} color="#841584" />
+      <View style={styles.buttonContainer}>
+        <Button title="Login" onPress={handleLogin} color="#FFFFFF" />
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  icon: {
+    width: 100,
+    height: 100,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -76,6 +86,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
+  buttonContainer: {
+    padding: 10,
+    borderRadius: 5,
+    backgroundColor: '#841584',
+    marginTop: 20,
+  }
 });
 
 export default LoginScreen;

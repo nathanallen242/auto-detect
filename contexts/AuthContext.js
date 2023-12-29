@@ -10,8 +10,15 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
  const [user, setUser] = useState(null);
  const [error, setError] = useState(null);
+ const [notificationsEnabled, setNotificationsEnabled] = useState(true);
  const auth = getAuth(FIREBASE_APP);
  const database = getDatabase(FIREBASE_APP);
+
+ const updatePassword = async (password) => {
+    if (user) {
+      await updatePassword(user, password);
+    }
+  };
 
  useEffect(() => {
    const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -30,8 +37,11 @@ export const AuthProvider = ({ children }) => {
      value={{
        user,
        setUser,
+       updatePassword,
        error,
        setError,
+       notificationsEnabled,
+       setNotificationsEnabled,
        login: async (email, password) => {
          try {
            const userCredential = await signInWithEmailAndPassword(auth, email, password);

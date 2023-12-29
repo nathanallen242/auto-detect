@@ -25,7 +25,7 @@ const SettingsScreen = ({ navigation }) => {
   const { clearImages } = useContext(ImageContext);
 
   const handleLanguageSelection = () => {
-    // Handle language selection
+    // Handle language selection: TODO
   };
 
   const handleClearHistory = () => {
@@ -49,7 +49,7 @@ const SettingsScreen = ({ navigation }) => {
   };
 
   const handleToggleTheme = () => {
-    // Handle toggle theme
+    // Handle toggle theme: TODO
   };
 
   return (
@@ -80,7 +80,7 @@ const SettingsScreen = ({ navigation }) => {
               navigation.navigate('Login');
               unsubscribe();
             }}/>
-            
+
             <Button title="Signup" onPress={() => {
               const unsubscribe = navigation.addListener('blur', () => {
                 console.log('Navigated away from SettingsScreen to Signup');
@@ -88,16 +88,26 @@ const SettingsScreen = ({ navigation }) => {
               navigation.navigate('Signup');
               unsubscribe();
             }} />
-            
+
           </>
         ) : (
-          <Button title="Logout" onPress={() => {
-            const unsubscribe = navigation.addListener('blur', () => {
-              console.log('Navigated away from SettingsScreen after Logout');
-            });
-            logout();
-            unsubscribe();
-          }} />
+          <>
+            <Button title="Edit Profile" onPress={() => {
+              const unsubscribe = navigation.addListener('blur', () => {
+                console.log('Navigated away from SettingsScreen to ProfileScreen');
+              });
+              navigation.navigate('Profile');
+              unsubscribe();
+            }} />
+
+            <Button title="Logout" onPress={() => {
+              const unsubscribe = navigation.addListener('blur', () => {
+                console.log('Navigated away from SettingsScreen after Logout');
+              });
+              logout();
+              unsubscribe();
+            }} />
+          </>
         )}
       </ScrollView>
     </SafeAreaView>

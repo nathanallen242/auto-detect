@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
@@ -10,8 +10,10 @@ import SettingsScreen from './screens/SettingsScreen';
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
 import DetailScreen from './screens/DetailScreen';
+import ProfileScreen from './screens/ProfileScreen';
 import { AuthProvider } from './contexts/AuthContext';
 import { ImageProvider } from './contexts/ImageContext';
+import { AuthContext } from './contexts/AuthContext';
 import * as SplashScreen from 'expo-splash-screen';
 import registerNNPushToken from 'native-notify';
 import { EXPO_APP_ID, EXPO_APP_TOKEN } from '@env';
@@ -35,14 +37,26 @@ const SettingsStack = () => {
       <Stack.Screen name="SettingsHome" component={SettingsScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Signup" component={SignupScreen} />
+      <Stack.Screen name="Profile" component={ProfileScreen} />
     </Stack.Navigator>
   );
 }
 
 
 export default function App() {
-  // Register for push notifications: TODO
-  registerNNPushToken(EXPO_APP_ID, EXPO_APP_TOKEN);
+  // Register for push notifications
+  const authContext = useContext(AuthContext);
+  const user = authContext ? authContext.user : null;
+  const notificationsEnabled = authContext ? authContext.notificationsEnabled : false;
+
+  useEffect(() => {
+    if (user && notificationsEnabled) {
+      registerNNPushToken(EXPO_APP_ID, EXPO_APP_TOKEN);
+    } else if (user && !notificationsEnabled) {
+      unregisterIndieDevice(user.uid);
+    }
+  }
+  , [user, notificationsEnabled]);
 
   // Prevent native splash screen from autohiding
   SplashScreen.preventAutoHideAsync();
