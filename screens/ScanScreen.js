@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo, useContext } from 'react';
 import {
 View, TouchableOpacity, StyleSheet, Text, 
-SafeAreaView, Modal, ActivityIndicator,
-Platform, Animated, Image } from 'react-native';
+SafeAreaView, Modal,
+Platform, Image, Dimensions } from 'react-native';
 import { FIREBASE_DB } from '../config/FireBase';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
@@ -17,7 +17,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { EXPO_PRIVATE_API_URL, EXPO_NATIVE_URL, EXPO_APP_ID, EXPO_APP_TOKEN } from '@env';
 
 
-const ScanScreen = ({ navigation }) => {
+const ScanScreen = ({  }) => {
   // Existing states
   const [hasPermission, setHasPermission] = useState(null);
   const [capturedImage, setCapturedImage] = useState(null);
@@ -32,13 +32,10 @@ const ScanScreen = ({ navigation }) => {
   const { addImage } = useContext(ImageContext);
   const { user } = useContext(AuthContext);
 
-  // Modal-related states
+  // Modal-related states/attributes
   const [modalVisible, setModalVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const successAnimation = useRef(new Animated.Value(0)).current;
-
-
+  const windowWidth = Dimensions.get('window').width;
+  const windowHeight = Dimensions.get('window').height;
   
   useEffect(() => {
     (async () => {
@@ -90,26 +87,28 @@ const ScanScreen = ({ navigation }) => {
     setCapturedImage(null);
     };
 
-    const handleSend = async () => {
-      setLoading(true);
-
-      const formData = new FormData();
-      formData.append('file', {
-        uri: capturedImage,
-        name: 'capturedImage.jpg',
-        type: 'image/jpeg',
+  const handleSend = async () => {
+    setModalVisible(false);
+    alert('Prediction is in progress and will be completed shortly. You will be notified when the prediction is complete.');
+  
+    const formData = new FormData();
+    formData.append('file', {
+      uri: capturedImage,
+      name: 'capturedImage.jpg',
+      type: 'image/jpeg',
+    });
+  
+    try {
+      const response = await axios.post(EXPO_PRIVATE_API_URL, formData, {
+        headers: {
+          'Content-Type':'multipart/form-data',
+        },
       });
-
-      try {
-        const response = await axios.post(EXPO_PRIVATE_API_URL, formData, {
-          headers: {
-            'Content-Type':'multipart/form-data',
-          },
-        });
-      
+    
       if (response.status === 200) {
         const prediction = response.data.prediction;
         const details = response.data.details;
+        
         if (user) {
           const imageRef = push(ref(FIREBASE_DB, `users/${user.uid}/images`));
           await set(imageRef, { imageUri: capturedImage, prediction: prediction, details: details});
@@ -117,18 +116,7 @@ const ScanScreen = ({ navigation }) => {
         else {
           addImage(capturedImage, prediction, details);
         }
-        setSuccess(true);
-        Animated.timing(successAnimation, {
-          toValue: 1,
-          duration: 3000,
-          useNativeDriver: true,
-        }).start(() => {
-          setSuccess(false);
-          successAnimation.setValue(0);
-          nav.navigate('Library');
-          setModalVisible(false);
-          setCapturedImage(null);
-        });
+        setCapturedImage(null);
         // Send push notification: only if user is logged in
         if (user) await
         axios.post(EXPO_NATIVE_URL, {
@@ -136,14 +124,21 @@ const ScanScreen = ({ navigation }) => {
           appId: EXPO_APP_ID,
           appToken: EXPO_APP_TOKEN,
           title: 'Prediction Successful!',
-          message: `Predicted car: ${prediction}`
+          message: `Predicted car: `
         });
       }
-      setLoading(false);
     } catch (error) {
       console.log('Error sending file: ', error);
       setCapturedImage(null);
-      setModalVisible(false);
+      // Send push notification: only if user is logged in
+      if (user) await
+      axios.post(EXPO_NATIVE_URL, {
+        subID: user.uid,
+        appId: EXPO_APP_ID,
+        appToken: EXPO_APP_TOKEN,
+        title: 'Prediction Unsuccessful!',
+        message: `An error occurred while predicting the car. Please try again.`
+      });
     }
   };
 
@@ -203,143 +198,177 @@ const ScanScreen = ({ navigation }) => {
 
   const { name, color } = getFlashIconStyle();
 
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-        <SafeAreaView style={styles.container}>
-          <GestureDetector gesture={pinchGesture}>
-              <View style={styles.wrapper}>
-              <Camera style={styles.preview} type={type} flashMode={flashMode} zoom={zoom} ref={cameraRef}>
-                  <View style={styles.topBar}>
-                  <TouchableOpacity style={styles.flashButton} onPress={toggleFlash}>
-                      <FontAwesome name={name} size={35} color={color} />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.flipButton} onPress={flipCamera}>
-                      <FontAwesome name="refresh" size={35} color="#FFF" />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
-                    <FontAwesome name="photo" size={35} color="#FFF" />
-                  </TouchableOpacity>
-                  </View>
-                  <TouchableOpacity style={styles.captureButton} onPress={handleCapture}>
-                      <FontAwesome name="circle-o" size={65} color="#FFF" />
-                  </TouchableOpacity>
-              </Camera>
+      <SafeAreaView style={styles.container}>
+        <GestureDetector gesture={pinchGesture}>
+          <View style={styles.wrapper}>
+            <Camera style={styles.preview} type={type} flashMode={flashMode} zoom={zoom} ref={cameraRef}>
+              <View style={styles.topBar}>
+                <TouchableOpacity style={styles.flashButton} onPress={toggleFlash}>
+                  <FontAwesome name={name} size={35} color={color} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.flipButton} onPress={flipCamera}>
+                  <FontAwesome name="refresh" size={35} color="#FFF" />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.photoButton} onPress={pickImage}>
+                  <FontAwesome name="photo" size={35} color="#FFF" />
+                </TouchableOpacity>
               </View>
-          </GestureDetector>
-            <Modal
-              animationType="slide"
-              transparent={true}
-              visible={modalVisible}
-              onRequestClose={() => {
-                setModalVisible(false);
-                setCapturedImage(null);
-              }}
-              >
-              <TouchableOpacity
-                style={{ flex: 1 }}
-                onPress={() => {
-                  setModalVisible(false);
-                }}
-              >
-              <View style={styles.modalContainer}>
+              <TouchableOpacity style={styles.captureButton} onPress={handleCapture}>
+                <FontAwesome name="circle-o" size={65} color="#FFF" />
+              </TouchableOpacity>
+            </Camera>
+          </View>
+        </GestureDetector>
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => {
+            setModalVisibler(false);
+            setCapturedImage(null);
+          }}
+        >
+          <TouchableOpacity
+            style={styles.modalMask}
+            onPress={() => {
+              setModalVisible(false);
+            }}
+          >
+            <View style={styles.modalWrapper}>
+              <View style={[styles.modalContainer, { width: windowWidth * 0.7, height: windowHeight * 0.5 }]}>
+                <View style={styles.modalHeader}>
+                  <Text style={{fontWeight: 'bold'}}>Captured Image: </Text>
+                </View>
                 <Image
-                style={styles.capturedImage}
-                source={{ uri: capturedImage }}
+                  style={styles.capturedImage}
+                  source={{ uri: capturedImage }}
                 />
-                <View style={styles.buttonContainer}>
-                  <TouchableOpacity onPress={handleRetake} style={styles.button} disabled={loading}>
+                <View style={styles.modalFooter}>
+                  <TouchableOpacity onPress={handleRetake} style={styles.modalDefaultButton}>
                     <Text style={styles.buttonText}>Retake</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity onPress={handleSend} style={styles.button} disabled={loading}>
+                  <TouchableOpacity onPress={handleSend} style={styles.modalDefaultButton}>
                     <Text style={styles.buttonText}>Predict</Text>
                   </TouchableOpacity>
                 </View>
-                {loading && <ActivityIndicator size="large" color="#0000ff" />}
-                {success && (
-                  <Animated.View style = {{ opacity: successAnimation }}>
-                    <Text style={styles.successText}>Analysis successful! Redirecting to Library...</Text>
-                  </Animated.View>
-                )}
               </View>
-            </TouchableOpacity>
-          </Modal>
-          </SafeAreaView>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      </SafeAreaView>
     </GestureHandlerRootView>
   );
 };
+  
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: 'black',
+    },
+    wrapper: {
+      flex: 1,
+    },
+    preview: {
+      flex: 1,
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    topBar: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      width: '100%',
+      paddingHorizontal: 20,
+      paddingTop: 20,
+    },
+    flipButton: {
+      alignSelf: 'flex-end',
+    },
+    flashButton: {
+      alignSelf: 'flex-start',
+    },
+    captureButton: {
+      marginBottom: 30,
+    },
+    photoButton: {
+      alignSelf: 'flex-end',
+    },
+    zoomSlider: {
+      alignSelf: 'stretch',
+    },
+    capturedImage: {
+      width: '75%', // Adjust as needed
+      height: '70%', // Adjust as needed
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: 'transparent',
+      marginBottom: 42,
+    },
+    button: {
+      backgroundColor: '#4CAF50',
+      padding: 10,
+      margin: 5,
+      borderRadius: 5,
+      width: '40%', // Adjust as needed
+    },
+    buttonContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      width: '100%',
+    },
+    buttonText: {
+      color: 'white',
+      fontSize: 20,
+      textAlign: 'center',
+    },
+    successText: {
+      color: 'white',
+      fontSize: 24,
+      fontWeight: 'bold',
+    },
+    modalMask: {
+      flex: 1,
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    modalWrapper: {
+      alignItems: 'center',
+    },
+    modalContainer: {
+      backgroundColor: 'white',
+      borderRadius: 14,
+      alignItems: 'center',
+      paddingBottom: 10,
+    },
+    modalHeader: {
+      padding: 20,
+      textAlign: 'center',
+      fontWeight: '700',
+      fontSize: 17,
+    },
+    modalFooter: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      width: '100%',
+      borderTopWidth: 0.5,
+      borderColor: 'hsla(240,6%,25%,.36)',
+    },
+    modalDefaultButton: {
+      flex: 1,
+      backgroundColor: 'transparent',
+      padding: 15,
+      alignItems: 'center',
+      borderColor: 'hsla(240,6%,25%,.36)',
+      borderTopWidth: 0.5,
+      borderRightWidth: 0.5,
+    },
+    buttonText: {
+      color: '#007AFF',
+      fontSize: 14,
+    },
+  });
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: 'black',
-  },
-  wrapper: {
-    flex: 1,
-  },
-  preview: {
-    flex: 1,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-  },
-  flipButton: {
-    alignSelf: 'flex-end',
-  },
-  flashButton: {
-    alignSelf: 'flex-start',
-  },
-  captureButton: {
-    marginBottom: 30,
-  },
-  photoButton: {
-    alignSelf: 'flex-end',
-  },
-  zoomSlider: {
-    alignSelf: 'stretch',
-  },
-  capturedImage: {
-    width: '70%', // Adjust as needed
-    height: '50%', // Adjust as needed
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'transparent',
-   },
-   modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    borderRadius: 10,
-  },
-  button: {
-    backgroundColor: '#4CAF50',
-    padding: 10,
-    margin: 5,
-    borderRadius: 5,
-    width: '40%', // Adjust as needed
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-   buttonText: {
-    color: 'white',
-    fontSize: 20,
-    textAlign: 'center',
-   },
-   successText: {
-    color: 'white',
-    fontSize: 24,
-    fontWeight: 'bold',
-   },
-});
-
+  
 export default ScanScreen;
