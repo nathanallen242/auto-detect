@@ -24,9 +24,9 @@ const Tab = createBottomTabNavigator();
 
 const LibraryStack = () => {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="LibraryHome" component={LibraryScreen} options = {{ headerShown: false }} />
-      <Stack.Screen name="Details" component={DetailScreen} options = {{ title: 'Car Details'}} />
+    <Stack.Navigator screenOptions={{  }}>
+      <Stack.Screen name="Garage" component={LibraryScreen} options = {{ headerShown: true, headerStyle: {backgroundColor: '#f5f5f5'}}} />
+      <Stack.Screen name="Details" component={DetailScreen} options = {{ title: 'Car Details', headerShown: false}} />
     </Stack.Navigator>
   );
 }

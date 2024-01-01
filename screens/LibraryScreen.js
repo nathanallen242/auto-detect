@@ -69,57 +69,60 @@ export default function LibraryScreen({ navigation }) {
     setFilteredImages(filtered);
    };
 
-
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-        <Text style={styles.title}>Library</Text>
-        <View style={styles.separator} />
-        <ScrollView 
-        showsVerticalScrollIndicator={false}
-         refreshControl={
-               <RefreshControl 
-               refreshing={refreshing} 
-               onRefresh={onRefresh} />
-               }
-         keyboardShouldPersistTaps='always'
-         >
-          <SearchBar 
-            searchQuery={query} 
-            setSearchQuery={setQuery} 
-            handleSearch={handleSearch}
-          />
-          {filteredImages.length === 0 ? (
-          <Text style={styles.noImagesText}>No images found. Start scanning to add images.</Text>
-        ) : (
-          <View style={styles.imageContainer}>
-            <FlatList
-              data={filteredImages}
-              renderItem={({ item }) => (
-                <TouchableOpacity onPress={() => navigation.navigate('Details', { image: item })}>
-                  <View style={{ alignItems: 'center', marginBottom: 30 }}>
-                    <Image
-                      source={{ uri: item.imageUri }}
-                      style={{ width: 300, height: 300, marginBottom: 10 }}
-                    />
-                    <Text style={{ marginTop: 5 }}>{item.prediction}</Text>
-                  </View>
-                </TouchableOpacity>
-              )}
-              keyExtractor={(item, index) => index.toString()}
-              showsVerticalScrollIndicator={false}
-            />
-          </View>
-        )}
-      </ScrollView>
-    </View>
-  </SafeAreaView>
-);
+   return (
+    <>
+      <SearchBar 
+        searchQuery={query} 
+        setSearchQuery={setQuery} 
+        handleSearch={handleSearch}
+      />
+      <SafeAreaView style={styles.safeArea}>
+        <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+          {/* <Text style={styles.title}>Garage</Text> */}
+          <View style={styles.separator} />
+          <ScrollView 
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl 
+                refreshing={refreshing} 
+                onRefresh={onRefresh} 
+              />
+            }
+            keyboardShouldPersistTaps='always'
+          >
+            {filteredImages.length === 0 ? (
+              <Text style={styles.noImagesText}>No images found. Start scanning to add images.</Text>
+            ) : (
+              <View style={styles.imageContainer}>
+                <FlatList
+                  data={filteredImages}
+                  renderItem={({ item }) => (
+                   <TouchableOpacity onPress={() => navigation.navigate('Details', { image: item })}>
+                     <View style={{ alignItems: 'center', marginBottom: 30 }}>
+                       <Image
+                         source={{ uri: item.imageUri }}
+                         style={{ width: 200, height: 200, marginBottom: 10, borderRadius: 20, }}
+                       />
+                       <Text style={{ marginTop: 5, fontWeight: 'bold', fontSize: 13 }}>{item.prediction}</Text>
+                     </View>
+                   </TouchableOpacity>
+                  )}
+                  keyExtractor={(item, index) => index.toString()}
+                  showsVerticalScrollIndicator={false}
+                />
+              </View>
+            )}
+          </ScrollView>
+        </View>
+      </SafeAreaView>
+    </>
+   );
 }
 
 const styles = StyleSheet.create({
  safeArea: {
     flex: 1,
+    backgroundColor: 'f5f5f5'
  },
  container: {
     flex: 1,

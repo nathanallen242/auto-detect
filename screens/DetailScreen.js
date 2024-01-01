@@ -49,7 +49,7 @@ const DetailScreen = ({ route }) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#e0e0e0'
+    backgroundColor: '#fffff'
   },
   detailsTitle: {
     fontSize: 25,
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#fffff',
   },
   image: {
     width: 300, 
